@@ -308,7 +308,7 @@ langchain-community
 langchain-google-vertexai
 langgraph
 google-cloud-aiplatform
-duckduckgo-search
+ddgs
 EOF
 ```
 
