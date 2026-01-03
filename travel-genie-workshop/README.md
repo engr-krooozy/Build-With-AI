@@ -13,7 +13,7 @@ This workshop is designed to be completed in approximately **1 hour**.
 *   How to set up a Google Cloud environment for AI development.
 *   How to build an **Autonomous Agent** using **LangGraph** that can reason and decide which tools to use.
 *   How to integrate **Gemini Pro** via Vertex AI as the reasoning engine.
-*   How to create **Tools** (simulated APIs) for your agent to interact with the world.
+*   How to give your agent access to the **Real-Time Internet** using DuckDuckGo Search.
 *   How to build a chat interface using **Streamlit** that maintains full conversation memory.
 *   How to containerize your application with **Docker**.
 *   How to deploy your agent to **Cloud Run** for a serverless, scalable production environment.
@@ -23,9 +23,9 @@ This workshop is designed to be completed in approximately **1 hour**.
 The workflow is:
 1.  **User Interaction:** The user chats with the Streamlit interface (e.g., "Plan a weekend trip to Paris").
 2.  **Agent Orchestration:** The **LangGraph** agent receives the message history.
-3.  **Reasoning:** **Gemini Pro** (Vertex AI) analyzes the request and decides if it needs to use tools (Search Flights, Search Hotels).
-4.  **Tool Execution:** The agent executes the selected Python functions (Tools).
-5.  **Synthesis:** The agent sees the tool outputs and generates a natural language response.
+3.  **Reasoning:** **Gemini Pro** (Vertex AI) analyzes the request and decides if it needs to use tools (Web Search).
+4.  **Tool Execution:** The agent executes the selected Python functions (e.g., searching DuckDuckGo for real flight prices).
+5.  **Synthesis:** The agent sees the search results and generates a natural language response.
 
 ---
 
@@ -98,34 +98,16 @@ from typing import Annotated, Sequence, TypedDict, Union
 
 from langchain_core.messages import BaseMessage, ToolMessage, HumanMessage, AIMessage
 from langchain_core.tools import tool
+from langchain_community.tools import DuckDuckGoSearchRun
 from langchain_google_vertexai import ChatVertexAI
 from langgraph.graph import StateGraph, END
 import json
 import random
 
-# --- 1. Define Simulated Tools ---
+# --- 1. Define Tools ---
 
-@tool
-def search_flights(origin: str, destination: str, date: str) -> str:
-    """Searches for flights between two cities on a specific date."""
-    print(f"DEBUG: Searching flights from {origin} to {destination} on {date}")
-    # Simulated response
-    flights = [
-        {"airline": "CloudAir", "flight_number": "CA123", "departure": "08:00", "arrival": "11:00", "price": 250},
-        {"airline": "TechJet", "flight_number": "TJ456", "departure": "14:00", "arrival": "17:00", "price": 320},
-    ]
-    return json.dumps(flights)
-
-@tool
-def search_hotels(location: str, price_range: str = "medium") -> str:
-    """Searches for hotels in a location with a specific price range (cheap, medium, expensive)."""
-    print(f"DEBUG: Searching hotels in {location} ({price_range})")
-    # Simulated response
-    hotels = [
-        {"name": "Hotel Java", "stars": 4, "price_per_night": 150, "amenities": ["Wifi", "Pool"]},
-        {"name": "Python Inn", "stars": 3, "price_per_night": 90, "amenities": ["Wifi", "Breakfast"]},
-    ]
-    return json.dumps(hotels)
+# We use DuckDuckGo to search the real web for flight and hotel information
+web_search = DuckDuckGoSearchRun(name="web_search")
 
 @tool
 def book_reservation(item_type: str, item_id: str, date: str) -> str:
@@ -135,7 +117,7 @@ def book_reservation(item_type: str, item_id: str, date: str) -> str:
     return f"Successfully booked {item_type} {item_id}. Confirmation code: {confirmation}"
 
 # List of tools available to the agent
-tools = [search_flights, search_hotels, book_reservation]
+tools = [web_search, book_reservation]
 tools_map = {t.name: t for t in tools}
 
 # --- 2. Setup the Model ---
@@ -322,9 +304,11 @@ cat > requirements.txt << 'EOF'
 streamlit
 langchain>=0.2.0
 langchain-core
+langchain-community
 langchain-google-vertexai
 langgraph
 google-cloud-aiplatform
+duckduckgo-search
 EOF
 ```
 
