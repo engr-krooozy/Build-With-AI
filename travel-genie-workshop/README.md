@@ -24,7 +24,7 @@ The workflow is:
 1.  **User Interaction:** The user chats with the Streamlit interface (e.g., "Plan a weekend trip to Paris").
 2.  **Agent Orchestration:** The **LangGraph** agent receives the message history.
 3.  **Reasoning & Grounding:** **Gemini Pro** (Vertex AI) analyzes the request. If it needs external information, it performs **Google Search Grounding** server-side.
-4.  **Tool Execution:** If the agent needs to perform an action (like booking), it calls the client-side tool.
+4.  **Tool Execution:** The agent relies on server-side Google Search. (Note: Custom tools are disabled in this configuration due to API exclusivity).
 5.  **Synthesis:** The agent generates a natural language response, grounded in real search results or tool outputs.
 
 ---
@@ -126,8 +126,9 @@ model = ChatVertexAI(
 )
 
 # Bind tools to the model
-# We bind our custom booking tool AND the built-in Google Search Grounding tool
-model = model.bind_tools(tools + [{"google_search": {}}])
+# IMPORTANT: Vertex AI currently does NOT support mixing Google Search Grounding with custom Function Calling.
+# To enable the "AI Search" experience, we bind ONLY the google_search tool.
+model = model.bind_tools([{"google_search": {}}])
 
 # --- 3. Define the Graph State ---
 
