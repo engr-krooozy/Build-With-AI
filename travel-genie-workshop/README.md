@@ -245,6 +245,14 @@ from agent import app as agent_app  # Import our compiled LangGraph app
 st.set_page_config(page_title="TravelGenie 🧞", layout="centered")
 st.title("TravelGenie: Your AI Concierge 🧞✈️")
 
+# Helper function to extract text from mixed content
+def get_message_text(msg):
+    # Gemini sometimes returns a list of parts (text, thought_signature, etc.)
+    if isinstance(msg.content, list):
+        # Join all text parts
+        return "".join([part.get("text", "") for part in msg.content if isinstance(part, dict) and part.get("type") == "text"])
+    return msg.content
+
 # Initialize chat history in session state as a list of LangChain Messages
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -257,7 +265,7 @@ for message in st.session_state.messages:
     elif isinstance(message, AIMessage) and message.content:
         # We only display the final text response, not the tool calls
         with st.chat_message("assistant"):
-            st.markdown(message.content)
+            st.markdown(get_message_text(message))
 
 # Chat input
 if prompt := st.chat_input("Where do you want to go?"):
@@ -284,7 +292,7 @@ if prompt := st.chat_input("Where do you want to go?"):
                 final_response = result["messages"][-1]
 
                 if isinstance(final_response, AIMessage):
-                    st.markdown(final_response.content)
+                    st.markdown(get_message_text(final_response))
                 else:
                     st.write("Processing complete.")
 
@@ -402,7 +410,30 @@ Once the command finishes, it will print a `Service URL` (e.g., `https://travel-
 
 ---
 
-## Section 6: Cleanup
+## Section 6: Making Changes & Updates
+
+Development is an iterative process. If you want to modify your agent (e.g., add a new tool, change the prompt, or fix a bug in `app.py`), follow these steps to redeploy:
+
+1.  **Modify the Code:** Edit your files in the Cloud Shell Editor.
+2.  **Rebuild the Image:**
+    ```bash
+    gcloud builds submit --tag $IMAGE_NAME
+    ```
+3.  **Redeploy to Cloud Run:**
+    ```bash
+    gcloud run deploy travel-genie \
+      --image $IMAGE_NAME \
+      --platform managed \
+      --region $REGION \
+      --allow-unauthenticated \
+      --memory 1Gi
+    ```
+
+Your changes will be live at the same URL!
+
+---
+
+## Section 7: Cleanup
 
 To avoid ongoing charges, delete the resources when you are done.
 
