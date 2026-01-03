@@ -13,7 +13,7 @@ This workshop is designed to be completed in approximately **1 hour**.
 *   How to set up a Google Cloud environment for AI development.
 *   How to build an **Autonomous Agent** using **LangGraph** that can reason and decide which tools to use.
 *   How to integrate **Gemini Pro** via Vertex AI as the reasoning engine.
-*   How to give your agent access to the **Real-Time Internet** using DuckDuckGo Search.
+*   How to enable **Google Search Grounding** to give your agent real-time, AI-native internet access.
 *   How to build a chat interface using **Streamlit** that maintains full conversation memory.
 *   How to containerize your application with **Docker**.
 *   How to deploy your agent to **Cloud Run** for a serverless, scalable production environment.
@@ -23,9 +23,9 @@ This workshop is designed to be completed in approximately **1 hour**.
 The workflow is:
 1.  **User Interaction:** The user chats with the Streamlit interface (e.g., "Plan a weekend trip to Paris").
 2.  **Agent Orchestration:** The **LangGraph** agent receives the message history.
-3.  **Reasoning:** **Gemini Pro** (Vertex AI) analyzes the request and decides if it needs to use tools (Web Search).
-4.  **Tool Execution:** The agent executes the selected Python functions (e.g., searching DuckDuckGo for real flight prices).
-5.  **Synthesis:** The agent sees the search results and generates a natural language response.
+3.  **Reasoning & Grounding:** **Gemini Pro** (Vertex AI) analyzes the request. If it needs external information, it performs **Google Search Grounding** server-side.
+4.  **Tool Execution:** If the agent needs to perform an action (like booking), it calls the client-side tool.
+5.  **Synthesis:** The agent generates a natural language response, grounded in real search results or tool outputs.
 
 ---
 
@@ -98,16 +98,12 @@ from typing import Annotated, Sequence, TypedDict, Union
 
 from langchain_core.messages import BaseMessage, ToolMessage, HumanMessage, AIMessage
 from langchain_core.tools import tool
-from langchain_community.tools import DuckDuckGoSearchRun
 from langchain_google_vertexai import ChatVertexAI
 from langgraph.graph import StateGraph, END
 import json
 import random
 
 # --- 1. Define Tools ---
-
-# We use DuckDuckGo to search the real web for flight and hotel information
-web_search = DuckDuckGoSearchRun(name="web_search")
 
 @tool
 def book_reservation(item_type: str, item_id: str, date: str) -> str:
@@ -116,21 +112,22 @@ def book_reservation(item_type: str, item_id: str, date: str) -> str:
     confirmation = f"CONF-{random.randint(1000, 9999)}"
     return f"Successfully booked {item_type} {item_id}. Confirmation code: {confirmation}"
 
-# List of tools available to the agent
-tools = [web_search, book_reservation]
+# List of tools available to the agent (Manual execution)
+# Note: Google Search is handled server-side, so we don't list it here for manual execution.
+tools = [book_reservation]
 tools_map = {t.name: t for t in tools}
 
 # --- 2. Setup the Model ---
 
 # We use Gemini 2.5 Pro via Vertex AI
-# Ensure you are in a region that supports Gemini (us-central1 is standard)
 model = ChatVertexAI(
     model_name="gemini-2.5-pro",
     temperature=0,
 )
 
-# Bind tools to the model so it knows they exist
-model = model.bind_tools(tools)
+# Bind tools to the model
+# We bind our custom booking tool AND the built-in Google Search Grounding tool
+model = model.bind_tools(tools + [{"google_search": {}}])
 
 # --- 3. Define the Graph State ---
 
@@ -305,10 +302,9 @@ streamlit
 langchain>=0.2.0
 langchain-core
 langchain-community
-langchain-google-vertexai
+langchain-google-vertexai>=2.0.11
 langgraph
 google-cloud-aiplatform
-ddgs
 EOF
 ```
 
