@@ -122,10 +122,10 @@ tools_map = {t.name: t for t in tools}
 
 # --- 2. Setup the Model ---
 
-# We use Gemini Pro via Vertex AI
+# We use Gemini 2.5 Pro via Vertex AI
 # Ensure you are in a region that supports Gemini (us-central1 is standard)
 model = ChatVertexAI(
-    model_name="gemini-pro",
+    model_name="gemini-2.5-pro",
     temperature=0,
 )
 
