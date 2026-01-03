@@ -402,7 +402,30 @@ Once the command finishes, it will print a `Service URL` (e.g., `https://travel-
 
 ---
 
-## Section 6: Cleanup
+## Section 6: Making Changes & Updates
+
+Development is an iterative process. If you want to modify your agent (e.g., add a new tool, change the prompt, or fix a bug in `app.py`), follow these steps to redeploy:
+
+1.  **Modify the Code:** Edit your files in the Cloud Shell Editor.
+2.  **Rebuild the Image:**
+    ```bash
+    gcloud builds submit --tag $IMAGE_NAME
+    ```
+3.  **Redeploy to Cloud Run:**
+    ```bash
+    gcloud run deploy travel-genie \
+      --image $IMAGE_NAME \
+      --platform managed \
+      --region $REGION \
+      --allow-unauthenticated \
+      --memory 1Gi
+    ```
+
+Your changes will be live at the same URL!
+
+---
+
+## Section 7: Cleanup
 
 To avoid ongoing charges, delete the resources when you are done.
 
