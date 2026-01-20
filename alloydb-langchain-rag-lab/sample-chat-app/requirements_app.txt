@@ -1,5 +1,0 @@
-streamlit>=1.28.0
-requests>=2.25.0
-# google-auth and google-auth-transport-requests are needed for fetching identity tokens
-google-auth>=2.22.0
-google-auth-transport-requests>=0.5.0
