@@ -1,0 +1,8 @@
+streamlit>=1.32.0
+langchain>=0.2.0
+langchain-core>=0.2.0
+langchain-google-vertexai>=1.0.0
+langgraph>=0.1.0
+google-cloud-aiplatform>=1.50.0
+requests>=2.31.0
+python-dotenv>=1.0.0
